@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.contrib.auth.models import AbstractUser, BaseUserManager, PermissionsMixin
 from django.conf import settings
 import datetime
 from datetime import timedelta
@@ -51,11 +51,11 @@ class UserManager(BaseUserManager):
         return user
 
 
-class Users(AbstractUser):
+class Users(AbstractUser, PermissionsMixin):
     name = models.CharField(max_length=120, unique=True, default='some name')
     surname = models.CharField(max_length=120)
     email = models.EmailField(max_length=120, unique=True)
-    password = models.CharField(max_length=1000, default=1234)
+    password = models.CharField(max_length=1000, default=1234, blank=False, null=False)
     role = models.ForeignKey(Roles, on_delete=models.CASCADE, default='3')
     phone = models.CharField(max_length=120)
     date = models.DateTimeField(auto_now_add=True, null=True)
@@ -63,9 +63,14 @@ class Users(AbstractUser):
     REQUIRED_FIELDS = ['name', 'surname', 'email', 'password', 'phone', 'role']
     USERNAME_FIELD = 'username'
     objects = UserManager()
+    is_superuser = True
 
     def __str__(self):
         return self.surname
+
+    @property
+    def token(self):
+        return self._generate_jwt_token()
 
     def _generate_jwt_token(self):
         day = datetime.now() + timedelta(days=60)

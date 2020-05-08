@@ -3,44 +3,50 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
-from .serializers import UsersRegistrationSerializer, LoginSerializer
+from .serializers import UsersSerializer
 # from jwt.utils import import jwt_payload
 from .renderers import UserJSONRenderer
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest.models import Users
 
 
-class RegistrationAPIView(APIView):
-    # queryset = Users.objects.all()
+class RegistrationView(generics.ListCreateAPIView):
+    queryset = Users.objects.all()
+    serializer_class = UsersSerializer
     permission_classes = (AllowAny,)
-    serializer_class = UsersRegistrationSerializer
-    renderer_classes = (UserJSONRenderer,)
 
-    def post(self, request):
-        user = request.data.get('users', {})
-        serializer = self.serializer_class(data=user)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-
-class LoginAPIView(APIView):
-    permission_classes = (AllowAny,)
-    renderer_classes = (UserJSONRenderer,)
-    serializer_class = LoginSerializer
-
-    def post(self, request):
-        user = request.data.get('users', {})
-
-        # Here we do not call `serializer.save()` like we did for
-        # the registration endpoint. This is because we don't  have
-        # anything to save. Instead, the `validate` method on our serializer
-        # handles everything we need.
-        serializer = self.serializer_class(data=user)
-        serializer.is_valid(raise_exception=True)
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
+#
+# class RegistrationAPIView(APIView):
+#     permission_classes = (AllowAny,)
+#     serializer_class = UsersRegistrationSerializer
+#     renderer_classes = (UserJSONRenderer,)
+#
+#     def post(self, request):
+#         user = request.data.get('users', {})
+#         serializer = self.serializer_class(data=user)
+#         serializer.is_valid(raise_exception=True)
+#         serializer.save()
+#
+#         return Response(serializer.data, status=status.HTTP_201_CREATED)
+#
+#
+#
+# class LoginAPIView(APIView):
+#     permission_classes = (AllowAny,)
+#     renderer_classes = (UserJSONRenderer,)
+#     serializer_class = LoginSerializer
+#
+#     def post(self, request):
+#         user = request.data.get('users', {})
+#
+#         # Here we do not call `serializer.save()` like we did for
+#         # the registration endpoint. This is because we don't  have
+#         # anything to save. Instead, the `validate` method on our serializer
+#         # handles everything we need.
+#         serializer = self.serializer_class(data=user)
+#         serializer.is_valid(raise_exception=True)
+#
+#         return Response(serializer.data, status=status.HTTP_200_OK)
 
 #
 # class UserRetrieveUpdateAPIView(RetrieveUpdateAPIView):
