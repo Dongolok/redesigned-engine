@@ -1,6 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.conf import settings
+import datetime
+from datetime import timedelta
+import jwt
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from rest_framework.authtoken.models import Token
@@ -64,11 +67,15 @@ class Users(AbstractUser):
     def __str__(self):
         return self.surname
 
+    def _generate_jwt_token(self):
+        day = datetime.now() + timedelta(days=60)
 
-@receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def generate_token(sender, instance=None, created=False, **kwargs):
-    if created:
-        Token.objects.create(user=instance)
+        token = jwt.encode({
+            'id': self.pk,
+            'exp': int(day.strftime('%s'))
+        }, settings.SECRET_KEY, algorithm='HS256')
+
+        return token.decode('utf-8')
 
 
 class Departments(models.Model):
@@ -120,7 +127,6 @@ class Orders(models.Model):
     status = models.ForeignKey(Status, on_delete=models.CASCADE, default=1)
     table = models.ForeignKey(Tables, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True, null=True)
-    # meals = models.ForeignKey(Meals, on_delete=models.CASCADE, related_name='order_meals', default=1)
     isitopen = models.BooleanField(default=False)
 
 
@@ -132,9 +138,27 @@ class MealsToOrder(models.Model):
     def __str__(self):
         return '%s' % self.orders
 
+    def save(self, *args, **kwargs):
+            counting = 0
+            self.count = int(counting)
+            super(MealsToOrder, self).save(*args, **kwargs)
+
+    def sum(self):
+        count = self.count
+        meal_id = self.meals
+        in_sum = MealsToOrder.objects.filter(meals=meal_id)
+        # return count * sum(in_sum)
+
+        return sum(item.get_count() for item in MealsToOrder.objects.filter(meals=meal_id))
+
 
 class Check(models.Model):
     percentage = models.OneToOneField(ServicePercentage, on_delete=models.CASCADE, default=15, related_name='percentage_check')
     order = models.OneToOneField(Orders, on_delete=models.CASCADE, default=1, related_name='orders_made')
     date = models.DateTimeField(auto_now_add=True, null=True)
+
+    def total_sum(self):
+        percentage = self.percentage
+        regular_sum = MealsToOrder.sum(self)
+        return int(percentage) * regular_sum + regular_sum
 

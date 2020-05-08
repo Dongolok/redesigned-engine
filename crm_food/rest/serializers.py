@@ -39,30 +39,31 @@ class StatusSerializer(serializers.ModelSerializer):
         fields = ['id', 'isitready']
 
 
-class OrdersSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Orders
-        fields = '__all__'
-
-    # def create(self, validated_data):
-    #     existing_user = validated_data.pop('user')
-    #     primary_status = validated_data('status')
-    #     number_of_table = validated_data('table')
-    #
-    #     orders = Orders.objects.create(**validated_data)
-    #
-    #     for new_user in existing_user:
-    #         Users.objects.create(orders=orders, **new_user)
-    #
-    #         return orders
-    #
-    #     for new_status
-
-
 class MealsToOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = MealsToOrder
         fields = '__all__'
+
+
+class OrdersSerializer(serializers.ModelSerializer):
+    meals = MealsToOrder()
+
+    class Meta:
+        model = Orders
+        fields = '__all__'
+
+    def create(self, validated_data):
+        existing_user = validated_data.pop('user')
+        primary_status = validated_data('status')
+        number_of_table = validated_data('table')
+
+        orders = Orders.objects.create(**validated_data)
+
+        for new_user in existing_user:
+            Users.objects.create(orders=orders, **new_user)
+
+            return orders
+
 
 
 class CheckSerializer(serializers.ModelSerializer):
